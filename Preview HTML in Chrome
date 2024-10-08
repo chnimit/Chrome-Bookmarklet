@@ -1,0 +1,43 @@
+javascript:(function() {
+    let htmlContent = prompt("Paste your HTML code below:", "<html><body><h1>Preview</h1></body></html>");
+    
+    if (htmlContent) {
+        let newWindow = window.open();
+        
+        newWindow.document.write(`
+            <html>
+                <head>
+                    <title>HTML Preview</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        pre { white-space: pre-wrap; word-wrap: break-word; display: none; border: 1px solid #ccc; padding: 10px; min-height: 70vh; background-color: #f0f0f0; }
+                        #previewArea { border: 1px solid #ccc; padding: 10px; min-height: 70vh; }
+                        button { margin-bottom: 10px; padding: 10px; cursor: pointer; }
+                    </style>
+                </head>
+                <body>
+                    <button id="toggleBtn">Toggle Plain View</button>
+                    <div id="previewArea">${htmlContent}</div>
+                    <pre id="plainArea">${htmlContent.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
+                    <script>
+                        const previewArea = document.getElementById('previewArea');
+                        const plainArea = document.getElementById('plainArea');
+                        const toggleBtn = document.getElementById('toggleBtn');
+                        
+                        toggleBtn.addEventListener('click', () => {
+                            if (plainArea.style.display === 'none') {
+                                previewArea.style.display = 'none';
+                                plainArea.style.display = 'block';
+                            } else {
+                                plainArea.style.display = 'none';
+                                previewArea.style.display = 'block';
+                            }
+                        });
+                    </script>
+                </body>
+            </html>
+        `);
+    } else {
+        alert("No HTML content provided.");
+    }
+})();
