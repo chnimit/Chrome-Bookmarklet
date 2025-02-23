@@ -1,0 +1,28 @@
+javascript:(function(){ 
+    let results = document.querySelectorAll('div#search .g'); 
+    let urls = new Set();
+
+    results.forEach((el) => { 
+        if (
+            el.closest('.related-question-pair') || 
+            el.closest('[data-content-feature]') || 
+            el.querySelector('h3') === null         
+        ) return;
+        
+        let link = el.querySelector('a')?.href;
+        if (link) urls.add(link);
+    });
+
+    if (urls.size) {
+        navigator.clipboard.writeText([...urls].join('\n')).then(() => {
+            let msg = document.createElement('div');
+            msg.innerText = 'Copied to Clipboard';
+            Object.assign(msg.style, {
+                position: 'fixed', bottom: '20px', right: '20px', background: 'black', color: 'white',
+                padding: '10px', borderRadius: '5px', zIndex: '9999'
+            });
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 1000);
+        });
+    }
+})();
