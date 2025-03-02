@@ -1,0 +1,120 @@
+javascript:(function() {
+    function getMetaContent(doc, name) {
+        var meta = doc.querySelector(`meta[name="${name}"], meta[name="${name.charAt(0).toUpperCase() + name.slice(1)}"]`);
+        return meta ? meta.content : 'N/A';
+    }
+
+    function getPageTitle(doc) {
+        var title = doc.querySelector('title');
+        return title ? title.innerText.trim() : 'N/A';
+    }
+
+    function getTagContent(doc, tag) {
+        var el = doc.querySelector(tag);
+        return el ? el.innerText.trim() : 'N/A';
+    }
+
+    function getTextLength(text) {
+        return text !== 'N/A' ? text.length : 0;
+    }
+
+    function extractMetaFromSource(sourceHTML) {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(sourceHTML, 'text/html');
+        return {
+            title: getPageTitle(doc),
+            titleLength: getTextLength(getPageTitle(doc)),
+            h1: getTagContent(doc, 'h1'),
+            h1Length: getTextLength(getTagContent(doc, 'h1')),
+            description: getMetaContent(doc, 'description'),
+            descriptionLength: getTextLength(getMetaContent(doc, 'description')),
+            robots: getMetaContent(doc, 'robots') || 'N/A',
+            canonical: doc.querySelector('link[rel="canonical"]') ? doc.querySelector('link[rel="canonical"]').href : 'N/A'
+        };
+    }
+
+    function createPopup(metaDataSource, metaDataRendered) {
+        var containerId = "meta-info-popup-container";
+        var existingPopup = document.getElementById(containerId);
+        if (existingPopup) existingPopup.remove();
+
+        var container = document.createElement("div");
+        container.id = containerId;
+        container.style.position = "fixed";  
+        container.style.top = "20px";
+        container.style.right = "20px";
+        container.style.width = window.innerWidth < 600 ? "90%" : "560px"; 
+        container.style.background = "white";
+        container.style.border = "1px solid #ccc";
+        container.style.padding = "15px";
+        container.style.zIndex = "999999999";  
+        container.style.boxShadow = "0px 4px 6px rgba(0,0,0,0.1)";
+        container.style.fontFamily = "Arial, sans-serif";
+        container.style.fontSize = "14px";
+        container.style.color = "#000";
+        container.style.overflowY = "auto";
+        container.style.maxHeight = "80vh";
+        container.style.borderRadius = "8px";
+        container.style.boxSizing = "border-box";
+
+        var closeButton = document.createElement("button");
+        closeButton.innerText = "✖";
+        closeButton.style.position = "absolute";
+        closeButton.style.top = "5px";
+        closeButton.style.right = "10px";
+        closeButton.style.border = "none";
+        closeButton.style.background = "red";
+        closeButton.style.color = "white";
+        closeButton.style.fontSize = "16px";
+        closeButton.style.padding = "5px 10px";
+        closeButton.style.borderRadius = "4px";
+        closeButton.style.cursor = "pointer";
+        closeButton.onclick = function() { container.remove(); };
+
+        var content = `
+            <h3 style="background: #ffd700; padding: 10px; margin: 0 0 10px; font-size: 16px; text-align: center;">
+                Meta Information
+            </h3>
+        `;
+
+        ['title', 'h1', 'description', 'robots'].forEach(key => {
+            content += `<strong>${key.charAt(0).toUpperCase() + key.slice(1)}</strong><br>`;
+            content += `<span style="color: blue; font-weight: bold;">Source:</span> 
+                        <span>${metaDataSource[key]}</span> 
+                        <em>${key === 'robots' ? '' : `(${metaDataSource[key + 'Length']} chars)`}</em><br>`;
+            content += `<span style="color: green; font-weight: bold;">Rendered:</span> 
+                        <span>${metaDataRendered[key]}</span> 
+                        <em>${key === 'robots' ? '' : `(${metaDataRendered[key + 'Length']} chars)`}</em><br><br>`;
+        });
+
+        content += `<strong>Canonical</strong><br>`;
+        content += `<span style="color: blue; font-weight: bold;">Source:</span> 
+                    <span>${metaDataSource.canonical}</span><br>`;
+        content += `<span style="color: green; font-weight: bold;">Rendered:</span> 
+                    <span>${metaDataRendered.canonical}</span><br><br>`;
+
+        container.innerHTML = content;
+        container.appendChild(closeButton);
+
+        document.body.appendChild(container);
+    }
+
+    var renderedMeta = {
+        title: getPageTitle(document),
+        titleLength: getTextLength(getPageTitle(document)),
+        h1: getTagContent(document, 'h1'),
+        h1Length: getTextLength(getTagContent(document, 'h1')),
+        description: getMetaContent(document, 'description'),
+        descriptionLength: getTextLength(getMetaContent(document, 'description')),
+        robots: getMetaContent(document, 'robots') || 'N/A',
+        canonical: document.querySelector('link[rel="canonical"]') ? document.querySelector('link[rel="canonical"]').href : 'N/A'
+    };
+
+    fetch(window.location.href)
+        .then(response => response.text())
+        .then(html => {
+            var sourceMeta = extractMetaFromSource(html);
+            createPopup(sourceMeta, renderedMeta);
+        })
+        .catch(error => alert("Failed to fetch source HTML!"));
+})();
